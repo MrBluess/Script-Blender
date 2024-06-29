@@ -1,0 +1,48 @@
+import bpy
+import bmesh
+from mathutils import Vector
+
+# Distancia objetivo entre vértices
+distancia_objetivo = 2.5
+
+# Obtener el objeto activo
+# Ramiro el mamado
+objeto_activo = bpy.context.active_object
+
+# Asegurarse de que el objeto está en modo objeto
+if objeto_activo.mode == 'EDIT':
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+# Crear un objeto bmesh y cargar la malla
+bm = bmesh.new()
+bm.from_mesh(objeto_activo.data)
+
+# Recorrer vértices seleccionados
+vertices_seleccionados = [v for v in bm.verts if v.select]
+
+# Ajustar la posición de los vértices
+for vertice_a in vertices_seleccionados:
+    for vertice_b in vertices_seleccionados:
+        # Evitar comparar el mismo vértice consigo mismo
+        if vertice_a != vertice_b:
+            # Calcular vector de diferencia de posición
+            diferencia_posicion = vertice_a.co - vertice_b.co
+
+            # Calcular distancia actual entre vértices
+            distancia_actual = diferencia_posicion.length
+
+            # Ajustar la posición si la distancia actual es menor que la objetivo
+            if distancia_actual < distancia_objetivo:
+                # Calcular el vector de ajuste
+                ajuste = diferencia_posicion.normalized() * (distancia_objetivo - distancia_actual) * 0.5
+                vertice_a.co += ajuste
+                vertice_b.co -= ajuste
+
+# Aplicar los cambios a la malla original
+bm.to_mesh(objeto_activo.data)
+bm.free()
+
+# Volver al modo edición
+bpy.ops.object.mode_set(mode='EDIT')
+bpy.ops.object.mode_set(mode='OBJECT')  # Actualización de la selección en modo objeto
+bpy.ops.object.mode_set(mode='EDIT')  # Regreso al modo edición
